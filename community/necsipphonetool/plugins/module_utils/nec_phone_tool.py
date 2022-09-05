@@ -105,6 +105,20 @@ def logOffPhone(hostName, sessionId, bypassProxy, verifyCerts):
         pass
     logOffResponse = requests.get(hostName + '/index.cgi?session={}&set=all'.format(sessionId), verify=verifyCerts)
     return logOffResponse
+	
+# Log off phone
+def setFactoryValues(hostName, sessionId, bypassProxy, verifyCerts):
+    if (bypassProxy):
+        pass
+    factoryValuesResponse = requests.get(hostName + '/index.cgi?session={}&data_clear=4110430'.format(sessionId), verify=verifyCerts)
+    return factoryValuesResponse
+
+# Set single paramater on phone
+def setParameter(hostName, sessionId, parameter, value, bypassProxy, verifyCerts):
+	if (bypassProxy):
+		pass
+	setParameterResponse = requests.get(hostName + '/index.cgi?session={}&set={}&item={}'.format(sessionId, parameter, value), verify=verifyCerts)
+	return setParameterResponse
 
 def main():
     print('\n\tDo not run me.\n\tImport me.\n')
