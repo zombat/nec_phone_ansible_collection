@@ -2,6 +2,9 @@ import re
 import requests
 import sys
 
+# Ignore bad ssl certs in requests
+requests.packages.urllib3.disable_warnings()
+
 phoneVariables =  {
 	'firstServerSettings': {},
 	'eapSupplicant': {},
@@ -100,7 +103,7 @@ def logOnPhone(hostName, logOnName, logOnPassword, bypassProxy, verifyCerts):
 def logOffPhone(hostName, sessionId, bypassProxy, verifyCerts):
     if (bypassProxy):
         pass
-    logOffResponse = requests.get(hostName + '/index.cgi?session={}&set=all'.format(sessionId, verify=verifyCerts))
+    logOffResponse = requests.get(hostName + '/index.cgi?session={}&set=all'.format(sessionId), verify=verifyCerts)
     return logOffResponse
 
 def main():
