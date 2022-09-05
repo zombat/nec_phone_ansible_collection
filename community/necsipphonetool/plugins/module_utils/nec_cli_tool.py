@@ -20,8 +20,10 @@ parser.add_argument('--hostName', type=str, nargs='+', help='Host name', require
 parser.add_argument('--insecureAlways', action='store_true', help='Use http:// instead of https://')
 parser.add_argument('--insecureSecondary', action='store_true', help='Use http:// if https:// fails')
 parser.add_argument('--factoryValues', action='store_true', help='Set device to factory values')
-parser.add_argument('--forceReboot', action='store_true', help='Force reboot')
+parser.add_argument('--forceReboot', action='store_true', help='Force soft reboot')
+parser.add_argument('--hardReboot', action='store_true', help='Force hard reboot')
 parser.add_argument('--setLLDP', type=str, help='Enable or disable LLDP', choices=['enable', 'disable'])
+parser.add_argument('--setSipServer', type=str, nargs='+', help='Set SIP server(s)')
 parser.add_argument('--testCreds', action='store_true', help='Test credentials')
 parser.add_argument('--v', action='store_true', help='Verbose output')
 parser.add_argument('--vv', action='store_true', help='Very Verbose output')
@@ -89,37 +91,43 @@ def logOff(hostName, sessionId, loopCheck):
         else:
             print('\tLogoff failed')
 
-def factoryValues(hostName, sessionId, loopCheck):
-    try:
-        factoryValuesResponse = nec_phone_tool.setFactoryValues(hostName, sessionId, False, False)
-        if factoryValuesResponse.status_code == 200:
-            if args.vv:
-                print('\tSet Factory values successful for session {} on host {}'.format(sessionId, hostName))
-            elif args.v:
-                print('\tSet Factory values successful')
-        else:
-            if args.vv:
-                print('\tSet Factory values failed for session {} on host {}'.format(sessionId, hostName))
-                print(factoryValuesResponse.status_code)
-                print(factoryValuesResponse.text)
-            else:
-                print('\tSet Factory values failed')
-    except:
-        if args.insecureSecondary and loopCheck == 0:
-            # Replace https:// with http:// and try again
-            print('\tDegrading protocol to http://')
-            hostName = hostName.replace('https://', 'http://')
-            logOff(hostName, sessionId, 1)
-        else:
-            print('\tSet Factory values failed')
-
-def setSingleParamItem(hostName, sessionId, paramItem, paramValue, loopCheck):
+def passSingleParameter(hostName, sessionId, paramKey, paramValue, loopCheck):
     if paramValue == 'enable':
         paramValue = '1'
     elif paramValue == 'disable':
         paramValue = '0'
     try:
-        setSingleParamItemResponse = nec_phone_tool.setParameter(hostName, sessionId, paramItem, paramValue, False, False)
+        passSingleParamItemResponse = nec_phone_tool.passSingleParameter(hostName, sessionId, paramKey, paramValue, False, False)
+        if passSingleParamItemResponse.status_code == 200:
+            if args.vv:
+                print('\tSet single param item successful for session {} on host {}'.format(sessionId, hostName))
+                print('\tParam: {} Value: {}'.format(paramKey, paramValue))
+            elif args.v:
+                print('\tSet single param item successful')
+        else:
+            if args.vv:
+                print('\tSet single param item failed for session {} on host {}'.format(sessionId, hostName))
+                print('\tParam: {} Value: {}'.format(paramKey, paramValue))
+                print(passSingleParamItemResponse.status_code)
+                print(passSingleParamItemResponse.text)
+            else:
+                print('\tSet single param item failed')
+    except:
+        if args.insecureSecondary and loopCheck == 0:
+            # Replace https:// with http:// and try again
+            print('\tDegrading protocol to http://')
+            hostName = hostName.replace('https://', 'http://')
+            passSingleParameter(hostName, sessionId, paramKey, paramValue, 1)
+        else:
+            print('\tSet single param item failed')
+
+def setSingleParameter(hostName, sessionId, paramItem, paramValue, loopCheck):
+    if paramValue == 'enable':
+        paramValue = '1'
+    elif paramValue == 'disable':
+        paramValue = '0'
+    try:
+        setSingleParamItemResponse = nec_phone_tool.setSingleItem(hostName, sessionId, paramItem, paramValue, False, False)
         if setSingleParamItemResponse.status_code == 200:
             if args.vv:
                 print('\tSet single param item successful for session {} on host {}'.format(sessionId, hostName))
@@ -139,7 +147,37 @@ def setSingleParamItem(hostName, sessionId, paramItem, paramValue, loopCheck):
             # Replace https:// with http:// and try again
             print('\tDegrading protocol to http://')
             hostName = hostName.replace('https://', 'http://')
-            setSingleParamItem(hostName, sessionId, paramItem, paramValue, 1)
+            setSingleParameter(hostName, sessionId, paramItem, paramValue, 1)
+        else:
+            print('\tSet single param item failed')
+
+def setTwoParameters(hostName, sessionId, paramItem, paramValue, pramTwoKey, paramTwoValue, loopCheck):
+    if paramValue == 'enable':
+        paramValue = '1'
+    elif paramValue == 'disable':
+        paramValue = '0'
+    try:
+        setTwoParamItemResponse = nec_phone_tool.setTwoParameters(hostName, sessionId, paramItem, paramValue, pramTwoKey, paramTwoValue, False, False)
+        if setTwoParamItemResponse.status_code == 200:
+            if args.vv:
+                print('\tSet single param item successful for session {} on host {}'.format(sessionId, hostName))
+                print('\tParam: {} Value: {}'.format(paramItem, paramValue))
+            elif args.v:
+                print('\tSet single param item successful')
+        else:
+            if args.vv:
+                print('\tSet single param item failed for session {} on host {}'.format(sessionId, hostName))
+                print('\tParam: {} Value: {}'.format(paramItem, paramValue))
+                print(setTwoParamItemResponse.status_code)
+                print(setTwoParamItemResponse.text)
+            else:
+                print('\tSet single param item failed')
+    except:
+        if args.insecureSecondary and loopCheck == 0:
+            # Replace https:// with http:// and try again
+            print('\tDegrading protocol to http://')
+            hostName = hostName.replace('https://', 'http://')
+            setTwoParameters(hostName, sessionId, paramItem, paramValue, pramTwoKey, paramTwoValue, 1)
         else:
             print('\tSet single param item failed')
 
@@ -153,12 +191,18 @@ def main():
                 print('\tFactory Value Settings')
             logonGood, sessionId = logOn(hostName, args.logOnName, args.logOnPassword, 0)                
             if logonGood:
-                factoryValues(hostName, sessionId, 0)
-                logOff(hostName, sessionId, 0) 
+                passSingleParameter(hostName, sessionId, 'data_clear', '4110430', 0)
+                passSingleParameter(hostName, sessionId, 'hard_reset', '4040408', 0)
         elif args.forceReboot:
             if args.v or args.vv:
                 print('\tForce reboot')
             logOff(hostName, 'null', 0)
+        elif args.hardReboot:
+            if args.v or args.vv:
+                print('\tHard reboot')
+            logonGood, sessionId = logOn(hostName, args.logOnName, args.logOnPassword, 0)                
+            if logonGood:
+                passSingleParameter(hostName, sessionId, 'hard_reset', '4040408', 0)
         elif args.testCreds:
             if args.v or args.vv:
                 print('\tTest credentials') 
@@ -170,8 +214,23 @@ def main():
                 print('\tSet LLDP') 
             logonGood, sessionId = logOn(hostName, args.logOnName, args.logOnPassword, 0)
             if logonGood:
-                setSingleParamItem(hostName, sessionId, '44604f3', args.setLLDP, 0)
+                setSingleParameter(hostName, sessionId, '44604f3', args.setLLDP, 0)
                 logOff(hostName, sessionId, 0)
+        elif args.setSipServer:
+            if args.v or args.vv:
+                print('\tSet SIP Server')
+            logonGood, sessionId = logOn(hostName, args.logOnName, args.logOnPassword, 0)
+            if logonGood:
+                for i in range(0, len(args.setSipServer)):
+                    if i == 0:
+                        setTwoParameters(hostName, sessionId, '40b041b', args.setSipServer[i], 'type', 'ip', 0)
+                    elif i == 1:
+                        setTwoParameters(hostName, sessionId, '40b041c', args.setSipServer[i], 'type', 'ip', 0)
+                    elif i == 2:
+                        setTwoParameters(hostName, sessionId, '40b041d', args.setSipServer[i], 'type', 'ip', 0)
+                    elif i == 3:
+                        setTwoParameters(hostName, sessionId, '40b041e', args.setSipServer[i], 'type', 'ip', 0)
+                logOff(hostName, sessionId, 0)                    
         else:
             print('\n\tNo actions selected\n')
         time.sleep(0.5)

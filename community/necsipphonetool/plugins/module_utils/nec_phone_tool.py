@@ -4,6 +4,10 @@ import sys
 
 # Ignore bad ssl certs in requests
 requests.packages.urllib3.disable_warnings()
+proxies = {
+	'http': 'http://10.4.0.53:5555',
+	'https': 'http://10.4.053:5555'
+}
 
 phoneVariables =  {
 	'firstServerSettings': {},
@@ -91,34 +95,41 @@ def msToMinSec(ms):
     return '{}:{}'.format(padDigits(str(minutes)), padDigits(str(seconds)))
 
 # Logon to phone
-def logOnPhone(hostName, logOnName, logOnPassword, bypassProxy, verifyCerts):
+def logOnPhone(hostName, logOnName, logOnPassword, bypassProxy, verifyCerts, proxies=proxies):
     #if (bypassProxy):
     #    pass
-    logOnResponse = requests.get(hostName + '/index.cgi?username={}&password={}'.format(logOnName, logOnPassword), verify=verifyCerts)
+    logOnResponse = requests.get(hostName + '/index.cgi?username={}&password={}'.format(logOnName, logOnPassword), verify=verifyCerts, proxies=proxies)
     # Extract session id from logon response with regex and return it
     sessionId = re.search(r'session=(.{4})"', logOnResponse.text).group(1)
     return logOnResponse, sessionId
        
 # Log off phone
-def logOffPhone(hostName, sessionId, bypassProxy, verifyCerts):
+def logOffPhone(hostName, sessionId, bypassProxy, verifyCerts, proxies=proxies):
     if (bypassProxy):
         pass
-    logOffResponse = requests.get(hostName + '/index.cgi?session={}&set=all'.format(sessionId), verify=verifyCerts)
+    logOffResponse = requests.get(hostName + '/index.cgi?session={}&set=all'.format(sessionId), verify=verifyCerts, proxies=proxies)
     return logOffResponse
 	
-# Log off phone
-def setFactoryValues(hostName, sessionId, bypassProxy, verifyCerts):
-    if (bypassProxy):
-        pass
-    factoryValuesResponse = requests.get(hostName + '/index.cgi?session={}&data_clear=4110430'.format(sessionId), verify=verifyCerts)
-    return factoryValuesResponse
-
-# Set single paramater on phone
-def setParameter(hostName, sessionId, parameter, value, bypassProxy, verifyCerts):
+# Pass single parameter to phone
+def passSingleParameter(hostName, sessionId, paramKey, paramValue, bypassProxy, verifyCerts, proxies=proxies):
 	if (bypassProxy):
 		pass
-	setParameterResponse = requests.get(hostName + '/index.cgi?session={}&set={}&item={}'.format(sessionId, parameter, value), verify=verifyCerts)
+	passParameterResponse = requests.get(hostName + '/index.cgi?session={}&{}={}'.format(sessionId, paramKey, paramValue), verify=verifyCerts, proxies=proxies)
+	return passParameterResponse
+
+# Set single paramater on phone
+def setSingleItem(hostName, sessionId, parameter, value, bypassProxy, verifyCerts, proxies=proxies):
+	if (bypassProxy):
+		pass
+	setParameterResponse = requests.get(hostName + '/index.cgi?session={}&set={}&item={}'.format(sessionId, parameter, value), verify=verifyCerts, proxies=proxies)
 	return setParameterResponse
+
+# Set single paramater on phone
+def setTwoParameters(hostName, sessionId, parameter, value, paramTwoKey, paramTwoValue, bypassProxy, verifyCerts, proxies=proxies):
+	if (bypassProxy):
+		pass
+	setTwoParameters = requests.get(hostName + '/index.cgi?session={}&set={}&item={}&{}={}'.format(sessionId, parameter, value, paramTwoKey, paramTwoValue), verify=verifyCerts, proxies=proxies)
+	return setTwoParameters
 
 def main():
     print('\n\tDo not run me.\n\tImport me.\n')
