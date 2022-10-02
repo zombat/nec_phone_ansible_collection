@@ -98,13 +98,6 @@ def run_module():
         verify_certs=dict(type='bool', required=False, Default=False),
     )
 
-
-    result = dict(
-        changed=False,
-        failed=True,
-        message=''
-    )
-
     module = AnsibleModule(
         argument_spec=module_args,
         supports_check_mode=True
@@ -131,10 +124,11 @@ def run_module():
         hostName = 'https://' + hostName
 
     result = dict(
-        changed = False,
+        changed=False,
+        failed=True,
         original_message = '',
-        message = 'Nothing done...'
-    )
+        message = 'Nothing happened.',
+        )
 
     module = AnsibleModule(
         argument_spec=module_args,

@@ -133,33 +133,32 @@ EXAMPLES = r'''
         vlan_priority: 2 
 '''
 
-# RETURN = r'''
-# # These are examples of possible return values, and in general should use other names for return values.
-# changed:
-#     description: True if the module itself made any changes
-#     type: bool
-#     returned: always
-#     sample: 'True/False'
-# failed:
-#     description: True if the module failed
-#     type: bool
-#     returned: always
-#     sample: 'True/False'
-# message:
-#     description: The output messages that the test module generates.
-#     type: list
-#     returned: always
-#     sample: '["Message 1", "Message 2"]'
-# session_id:
-#     description: The session ID used for API calls.
-#     type: str
-#     returned: if keep_session is true
-# '''
+RETURN = r'''
+# These are examples of possible return values, and in general should use other names for return values.
+changed:
+    description: True if the module itself made any changes
+    type: bool
+    returned: always
+    sample: 'True/False'
+failed:
+    description: True if the module failed
+    type: bool
+    returned: always
+    sample: 'True/False'
+message:
+    description: The output messages that the module generates.
+    type: list
+    returned: always
+    sample: '["Message 1", "Message 2"]'
+session_id:
+    description: The session ID used for API calls.
+    type: str
+    returned: if keep_session is true
+'''
 
 from ansible.module_utils.basic import AnsibleModule
 # import module snippets from community.necsipphonetool
 from ansible_collections.community.necsipphonetool.plugins.module_utils.nec_phone_tool import *
-import re
 
 def run_module():
     # define available arguments/parameters a user can pass to the module
@@ -173,7 +172,7 @@ def run_module():
         keep_session=dict(type='bool', required=False, Default=False),
         lldp_mode=dict(type='bool', required=False, Default=False),
         password=dict(type='str', required=False, Default='6633222', no_log=True),
-        port_speed=dict(type='str', required=False),
+        port_speed=dict(type='str', required=False, choices=['auto', '10half', '10full', '100half', '100full']),
         session_id=dict(type='str', required=False),
         spare_default_gateway=dict(type='str', required=False),
         spare_dns_address=dict(type='str', required=False),
@@ -185,13 +184,14 @@ def run_module():
         verify_certs=dict(type='bool', required=False, Default=False),
         vlan_id=dict(type='int', required=False),
         vlan_mode=dict(type='bool', required=False, Default=False),
-        vlan_priority=dict(type='int', required=False),
+        vlan_priority=dict(type='int', required=False, choices=[0, 1, 2, 3, 4, 5, 6, 7])
     )
 
     result = dict(
         changed=False,
         failed=True,
-        message=[]
+        original_message = '',
+        message = []
     )
 
     module = AnsibleModule(
@@ -203,7 +203,6 @@ def run_module():
         module.exit_json(**result)
 
     result['original_message'] = module.params['host']
-    result['message'] = 'goodbye'
 
     # Set variables from module arguments
     defaultGateway = module.params['default_gateway']
@@ -234,12 +233,6 @@ def run_module():
     else:
         hostName = 'https://' + hostName
 
-    result = dict(
-        changed = False,
-        original_message = '',
-        message = []
-    )
-
     module = AnsibleModule(
         argument_spec=module_args,
         supports_check_mode=True
@@ -260,7 +253,7 @@ def run_module():
             defaultGatewayResponse = setTwoParameters(hostName, sessionId, '4020403', defaultGateway, 'type', 'ip', False, verifyCerts, False)
             if defaultGatewayResponse.status_code != 200:
                 result['failed'] = True
-                result['message'] = 'Failed to set default gateway'
+                result['message'].append('Failed to set default gateway')
             else:
                 result['failed'] = False
                 result['message'].append('Default gateway set to ' + defaultGateway)
