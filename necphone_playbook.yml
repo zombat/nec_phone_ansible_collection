@@ -39,22 +39,22 @@
     #     # vlan_priority: 2
     #   register: result
     
-    - name: Set PC Port settings
-      community.necsipphonetool.set_pc_port:
-        username: 'ADMIN'
-        password: '6633222'
-        host: "10.4.0.4"      
-        force_http: True
-        keep_session: False
-        # session_id: '{{ result.session_id }}'
-        eapol_forwarding: False
-        port_speed: "10half"
-        port_available: False
-        port_security: False
-        vlan_id: 222
-        vlan_mode: False
-        vlan_priority: 2
-      register: result
+    # - name: Set PC Port settings
+    #   community.necsipphonetool.set_pc_port:
+    #     username: 'ADMIN'
+    #     password: '6633222'
+    #     host: "10.4.0.4"      
+    #     force_http: True
+    #     keep_session: False
+    #     # session_id: '{{ result.session_id }}'
+    #     eapol_forwarding: False
+    #     port_speed: "10half"
+    #     port_available: False
+    #     port_security: False
+    #     vlan_id: 222
+    #     vlan_mode: False
+    #     vlan_priority: 2
+    #   register: result
   
     - name: Test result
       debug:
