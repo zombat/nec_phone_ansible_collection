@@ -1,0 +1,44 @@
+# Example playbook for setting values on NEC-SIP phones.
+---
+- name: Set factory defaults
+  hosts: localhost
+  gather_facts: no
+  tasks:
+
+    # - name: Set factory values
+    #   community.necsipphonetool.set_factoryvalues:
+    #     username: 'ADMIN'
+    #     password: '6633222'
+    #     host: "10.4.0.4"
+    #     force_http: True
+    #     keep_session: True
+    #   register: result
+    
+    - name: Set LAN settings
+      community.necsipphonetool.set_lan_port:
+        username: 'ADMIN'
+        password: '6633222'
+        host: "10.4.0.4"      
+        force_http: True
+        # session_id: '{{ result.session_id }}'
+        default_gateway: "192.168.1.1"
+        dhcp_mode: False
+        dns_address: "192.168.1.1"
+        lldp_mode: False
+        ip_address: "192.168.1.10"
+        # port_speed: "10half"
+        subnet_mask: "255.255.255.0" 
+        # spare_default_gateway: "192.168.2.1"
+        # spare_dns_address: "192.168.2.1"
+        # spare_ip_address: "192.168.2.10"
+        # spare_ip_address_mode: "spare"
+        # spare_subnet_mask: "255.255.0.0"
+        vlan_id: 222
+        vlan_mode: False
+        vlan_priority: 2
+        
+      register: result
+  
+    - name: Test result
+      debug:
+        var: result

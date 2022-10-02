@@ -13,7 +13,7 @@ import time
 parser = argparse.ArgumentParser(prog='nec_cli_tool.py', description='NEC CLI Tool for')
 # DT750 has TCP 80(http), 81 (hosts2-ns), and 82 (xfer) open by default.
 # DT820 also has TCP 443 (https)
-
+parser.add_argument('--bruteForce',action='store_true', help='Information on brute forcing')
 parser.add_argument('--logOnName', type=str, help='Logon name', default='ADMIN')
 parser.add_argument('--logOnPassword', type=str, help='Logon password', default='6633222')
 parser.add_argument('--hostName', type=str, nargs='+', help='Host name', required=True)
@@ -34,6 +34,8 @@ if args.insecureAlways:
 else:
     httpSchema = 'https://'
 
+#  gobuster fuzz --url http://10.4.0.51/index.cgi?username=ADMIN&password=FUZZ --wordlist [path/to/file]
+# gobuster -w ./test.list -u http://10.4.0.51/index.cgi?username=ADMIN&password=FUZZ
 
 # May use this in the future if I decide to remove requirement for hostName
 # def checkArgs(hostName, logOnName, logOnPassword):
@@ -91,35 +93,6 @@ def logOff(hostName, sessionId, loopCheck):
         else:
             print('\tLogoff failed')
 
-def passSingleParameter(hostName, sessionId, paramKey, paramValue, loopCheck):
-    if paramValue == 'enable':
-        paramValue = '1'
-    elif paramValue == 'disable':
-        paramValue = '0'
-    try:
-        passSingleParamItemResponse = nec_phone_tool.passSingleParameter(hostName, sessionId, paramKey, paramValue, False, False)
-        if passSingleParamItemResponse.status_code == 200:
-            if args.vv:
-                print('\tSet single param item successful for session {} on host {}'.format(sessionId, hostName))
-                print('\tParam: {} Value: {}'.format(paramKey, paramValue))
-            elif args.v:
-                print('\tSet single param item successful')
-        else:
-            if args.vv:
-                print('\tSet single param item failed for session {} on host {}'.format(sessionId, hostName))
-                print('\tParam: {} Value: {}'.format(paramKey, paramValue))
-                print(passSingleParamItemResponse.status_code)
-                print(passSingleParamItemResponse.text)
-            else:
-                print('\tSet single param item failed')
-    except:
-        if args.insecureSecondary and loopCheck == 0:
-            # Replace https:// with http:// and try again
-            print('\tDegrading protocol to http://')
-            hostName = hostName.replace('https://', 'http://')
-            passSingleParameter(hostName, sessionId, paramKey, paramValue, 1)
-        else:
-            print('\tSet single param item failed')
 
 def setSingleParameter(hostName, sessionId, paramItem, paramValue, loopCheck):
     if paramValue == 'enable':
