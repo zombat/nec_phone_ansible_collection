@@ -1,7 +1,7 @@
 # Plugin to Create Inventory from IPAN CSV file
 
 DOCUMENTATION='''
-    name: Inventory from IPAN CSV file
+    name: community.necsipphonetool.inventory_from_ipan
     plugin_type: inventory
     author:
         - Raymond Rizzo
